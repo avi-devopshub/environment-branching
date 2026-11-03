@@ -1,6 +1,7 @@
+
 pipeline {
-    agent{
-      label 'agent'
+    agent {
+        label 'agent'
     }
 
     parameters {
@@ -9,6 +10,13 @@ pipeline {
             choices: ['dev', 'qa', 'uat', 'prod'],
             description: 'Select Git Branch'
         )
+    }
+
+    environment {
+        AWS_REGION = 'ap-south-1'
+        AWS_ACCOUNT_ID = 'YOUR_AWS_ACCOUNT_ID'
+        ECR_REPO = 'orders-service'
+        IMAGE_TAG = "${BRANCH_NAME}-${BUILD_NUMBER}"
     }
 
     stages {
@@ -23,20 +31,35 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo "Building Orders Service"
+                echo "Building Orders Service for ${params.BRANCH_NAME}"
             }
         }
 
         stage('Docker Build') {
             steps {
-                echo "Building Docker Image"
+                dir('microservices/orders') {
+                    sh """
+                        echo "${ECR_REPO}:${IMAGE_TAG}"
+                    """
+                }
             }
         }
-
+        /*
         stage('Image Push') {
             steps {
-                echo "Pushing Docker Image to ECR"
+                sh """
+                    aws ecr get-login-password --region ${AWS_REGION} |
+                    docker login --username AWS --password-stdin \
+                    ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+
+                    docker tag ${ECR_REPO}:${IMAGE_TAG} \
+                    ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+
+                    docker push \
+                    ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+                """
             }
         }
+        */
     }
 }
