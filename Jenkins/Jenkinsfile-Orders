@@ -1,0 +1,42 @@
+pipeline {
+    agent{
+      label 'agent'
+    }
+
+    parameters {
+        choice(
+            name: 'BRANCH_NAME',
+            choices: ['dev', 'qa', 'uat', 'prod'],
+            description: 'Select Git Branch'
+        )
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: "${params.BRANCH_NAME}",
+                    url: 'https://github.com/avi-devopshub/environment-branching.git',
+                    credentialsId: 'github-credentials'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo "Building Orders Service"
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo "Building Docker Image"
+            }
+        }
+
+        stage('Image Push') {
+            steps {
+                echo "Pushing Docker Image to ECR"
+            }
+        }
+    }
+}
